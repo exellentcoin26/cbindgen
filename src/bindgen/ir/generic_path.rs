@@ -6,7 +6,7 @@ use syn::ext::IdentExt;
 use crate::bindgen::cdecl;
 use crate::bindgen::config::{Config, Language};
 use crate::bindgen::declarationtyperesolver::{DeclarationType, DeclarationTypeResolver};
-use crate::bindgen::ir::{ConstExpr, Path, Type};
+use crate::bindgen::ir::{ConstExpr, Path, PrimitiveType, Type};
 use crate::bindgen::language_backend::LanguageBackend;
 use crate::bindgen::utilities::IterHelpers;
 use crate::bindgen::writer::SourceWriter;
@@ -325,7 +325,9 @@ impl GenericPath {
                 ref args,
                 ..
             }) => args.iter().try_skip_map(|x| match *x {
-                syn::GenericArgument::Type(ref x) => Ok(Type::load(x)?.map(GenericArgument::Type)),
+                syn::GenericArgument::Type(ref x) => Ok(Type::load(x)?
+                    .or(Some(Type::Primitive(PrimitiveType::Void)))
+                    .map(GenericArgument::Type)),
                 syn::GenericArgument::Lifetime(_) => Ok(None),
                 syn::GenericArgument::Const(ref x) => {
                     Ok(Some(GenericArgument::Const(ConstExpr::load(x)?)))
